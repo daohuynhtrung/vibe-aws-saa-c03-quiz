@@ -296,8 +296,19 @@ export const App: React.FC = () => {
 
       const key = e.key.toUpperCase();
 
-      if (['A', 'B', 'C', 'D', 'E'].includes(key) && !e.ctrlKey && !e.metaKey) {
-        handleSelectOption(key);
+      // Remap 1, 2, 3, 4, 5 to A, B, C, D, E
+      const numToOptionMap: Record<string, string> = {
+        '1': 'A',
+        '2': 'B',
+        '3': 'C',
+        '4': 'D',
+        '5': 'E',
+      };
+
+      const mappedKey = numToOptionMap[e.key] || key;
+
+      if (['A', 'B', 'C', 'D', 'E'].includes(mappedKey) && !e.ctrlKey && !e.metaKey) {
+        handleSelectOption(mappedKey);
       } else if (e.key === 'Enter') {
         handleSubmitAnswer();
       } else if (e.key === 'ArrowRight' || key === 'K') {
@@ -435,7 +446,7 @@ export const App: React.FC = () => {
             {/* Quick Tips */}
             <div className="hidden sm:flex items-center justify-between text-[11px] text-slate-500 px-2">
               <div className="flex items-center gap-4">
-                <span>Press <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">A-E</kbd> to select</span>
+                <span>Press <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">1-5</kbd> (or <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">A-E</kbd>) to select</span>
                 <span><kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">Enter</kbd> to check</span>
                 <span><kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">← / →</kbd> to navigate</span>
               </div>

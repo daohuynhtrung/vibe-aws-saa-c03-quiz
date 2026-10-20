@@ -10,7 +10,7 @@ export const KeyboardHelpModal: React.FC<KeyboardHelpModalProps> = ({ isOpen, on
   if (!isOpen) return null;
 
   const shortcuts = [
-    { key: 'A, B, C, D, E', desc: 'Select or toggle option choice' },
+    { key: '1, 2, 3, 4, 5', desc: 'Select or toggle option choice (or A, B, C, D, E)' },
     { key: 'Enter', desc: 'Submit and reveal answer / Check answer' },
     { key: '→ or K', desc: 'Go to next question' },
     { key: '← or J', desc: 'Go to previous question' },

@@ -70,7 +70,7 @@ def run_quiz(start_id=1, is_random=False):
         print()
 
         multi_hint = f"(Choose {q['expected_count']})" if q['is_multiselect'] else "(Choose 1)"
-        print(f"{DIM}Commands: [A-E to answer] | [N]ext | [P]rev | [J]ump # | [Q]uit {multi_hint}{RESET}")
+        print(f"{DIM}Commands: [1-5 / A-E to answer] | [N]ext | [P]rev | [J]ump # | [Q]uit {multi_hint}{RESET}")
 
         user_input = input(f"\n{BOLD}Your Choice >> {RESET}").strip()
         if not user_input:
@@ -99,14 +99,17 @@ def run_quiz(start_id=1, is_random=False):
                         break
             continue
 
-        # Clean chosen answers
-        chosen = [ch for ch in cmd.replace(",", " ").replace("+", " ").split() if ch in ["A", "B", "C", "D", "E"]]
+        # Map 1, 2, 3, 4, 5 -> A, B, C, D, E
+        num_map = {"1": "A", "2": "B", "3": "C", "4": "D", "5": "E"}
+        tokens = cmd.replace(",", " ").replace("+", " ").split()
+        converted = [num_map.get(t, t) for t in tokens]
+        chosen = [ch for ch in converted if ch in ["A", "B", "C", "D", "E"]]
         if not chosen:
-            # Maybe single string like "AB" or "AC"
-            chosen = [ch for ch in cmd if ch in ["A", "B", "C", "D", "E"]]
+            # Maybe joined string like "12" or "AB"
+            chosen = [num_map.get(ch, ch) for ch in cmd if num_map.get(ch, ch) in ["A", "B", "C", "D", "E"]]
 
         if not chosen:
-            print(f"{RED}Invalid input. Please choose options like A or A, B{RESET}")
+            print(f"{RED}Invalid input. Please choose options like 1, 2 or A, B{RESET}")
             input("Press Enter to continue...")
             continue
 

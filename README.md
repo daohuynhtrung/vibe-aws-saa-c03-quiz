@@ -76,7 +76,7 @@ python3 scripts/cli_quiz.py --random
 
 | Shortcut | Action |
 | :--- | :--- |
-| `A`, `B`, `C`, `D`, `E` | Select / toggle option |
+| `1`, `2`, `3`, `4`, `5` | Select / toggle option choices (or `A`, `B`, `C`, `D`, `E`) |
 | `Enter` | Submit / Check answer |
 | `→` or `K` | Next question |
 | `←` or `J` | Previous question |
