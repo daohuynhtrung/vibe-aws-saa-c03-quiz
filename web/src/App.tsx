@@ -258,9 +258,13 @@ export const App: React.FC = () => {
     const qid = currentQuestion.id;
     const isSub = !!submitted[qid];
 
-    // If already submitted in practice mode, selecting retry clears it
+    // If already submitted in practice mode, unfreeze so user can select/retry
     if (isSub && mode === 'practice') {
-      return;
+      setSubmitted(prev => {
+        const next = { ...prev };
+        delete next[qid];
+        return next;
+      });
     }
 
     const currentSelected = userAnswers[qid] || [];
@@ -406,9 +410,10 @@ export const App: React.FC = () => {
   // Global Keyboard listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if typing in input
+      // Don't trigger if user is actively typing in an input/textarea/select
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName)) {
         if (e.key === 'Escape') {
+          (e.target as HTMLElement).blur();
           setIsDrawerOpen(false);
           setIsHelpOpen(false);
           setIsSummaryOpen(false);
@@ -416,32 +421,66 @@ export const App: React.FC = () => {
         return;
       }
 
-      const key = e.key.toUpperCase();
+      // Check physical key location first (e.code), which is layout and IME immune
+      let optionKey: string | null = null;
+      switch (e.code) {
+        case 'Digit1':
+        case 'Numpad1':
+        case 'KeyA':
+          optionKey = 'A';
+          break;
+        case 'Digit2':
+        case 'Numpad2':
+        case 'KeyB':
+          optionKey = 'B';
+          break;
+        case 'Digit3':
+        case 'Numpad3':
+        case 'KeyC':
+          optionKey = 'C';
+          break;
+        case 'Digit4':
+        case 'Numpad4':
+        case 'KeyD':
+          optionKey = 'D';
+          break;
+        case 'Digit5':
+        case 'Numpad5':
+        case 'KeyE':
+          optionKey = 'E';
+          break;
+      }
 
-      // Remap 1, 2, 3, 4, 5 to A, B, C, D, E
-      const numToOptionMap: Record<string, string> = {
-        '1': 'A',
-        '2': 'B',
-        '3': 'C',
-        '4': 'D',
-        '5': 'E',
-      };
+      // Character-level fallback for e.key
+      if (!optionKey) {
+        const rawKey = e.key.toUpperCase();
+        const fallbackMap: Record<string, string> = {
+          '1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E',
+          'A': 'A', 'B': 'B', 'C': 'C', 'D': 'D', 'E': 'E'
+        };
+        optionKey = fallbackMap[rawKey] || null;
+      }
 
-      const mappedKey = numToOptionMap[e.key] || key;
-
-      if (['A', 'B', 'C', 'D', 'E'].includes(mappedKey) && !e.ctrlKey && !e.metaKey) {
-        handleSelectOption(mappedKey);
+      if (optionKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        handleSelectOption(optionKey);
       } else if (e.key === 'Enter') {
+        e.preventDefault();
         handleSubmitAnswer();
-      } else if (e.key === 'ArrowRight' || key === 'K') {
+      } else if (e.key === 'ArrowRight' || e.code === 'KeyK') {
+        e.preventDefault();
         handleNext();
-      } else if (e.key === 'ArrowLeft' || key === 'J') {
+      } else if (e.key === 'ArrowLeft' || e.code === 'KeyJ') {
+        e.preventDefault();
         handlePrev();
-      } else if (key === 'F') {
+      } else if (e.code === 'KeyF' || e.code === 'KeyB') {
+        e.preventDefault();
         handleToggleBookmark();
-      } else if (key === 'Q') {
+      } else if (e.code === 'KeyQ') {
+        e.preventDefault();
         setIsDrawerOpen(prev => !prev);
       } else if (e.key === '?') {
+        e.preventDefault();
         setIsHelpOpen(prev => !prev);
       } else if (e.key === 'Escape') {
         setIsDrawerOpen(false);
