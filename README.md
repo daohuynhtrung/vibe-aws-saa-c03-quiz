@@ -85,8 +85,17 @@ python3 scripts/cli_quiz.py --random
 | `?` | Show Keyboard Shortcuts help dialog |
 | `Esc` | Close open dialogs or drawers |
 
-### 4. Progress Persistence (`localStorage`)
-Your practice history, submitted answers, flags/bookmarks, and dark/light mode preferences are automatically preserved in your browser's local storage—so your study progress is never lost across tab closes or reboots.
+### 4. Automatic Repository Auto-Sync (`data/user_progress.json`)
+
+Your study progress is **automatically saved directly into the repository files**:
+- Every time you select an answer, check a question, or bookmark, the app automatically writes your updated state to:
+  - **`data/user_progress.json`** (main synced session)
+  - **`data/aws-saa-progress-<YYYY-MM-DD>.json`** (daily automatic snapshot backup)
+- **Automatic Resume on Reload:** Whenever you open or refresh the web app, it automatically reads `data/user_progress.json` and resumes right where you left off.
+- **Cross-Device Study:** To continue on another computer:
+  1. On current machine: `git add data/user_progress.json && git commit -m "Study progress" && git push`
+  2. On second machine: `git pull && npm run dev` (Your entire session is 100% restored automatically!)
+- **Shared with Terminal CLI:** Running `python3 scripts/cli_quiz.py` syncs with the exact same JSON file!
 
 ---
 

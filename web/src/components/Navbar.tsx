@@ -14,11 +14,12 @@ import {
   Download,
   Upload
 } from 'lucide-react';
-import { PracticeMode } from '../types';
+import { PracticeMode, SyncStatus } from '../types';
 
 interface NavbarProps {
   mode: PracticeMode;
   setMode: (mode: PracticeMode) => void;
+  syncStatus: SyncStatus;
   examActive: boolean;
   timeRemaining: number;
   onFinishExam: () => void;
@@ -37,6 +38,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   mode,
   setMode,
+  syncStatus,
   examActive,
   timeRemaining,
   onFinishExam,
@@ -157,6 +159,35 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div>Bank: {totalQuestions} Qs</div>
             </div>
           )}
+
+          {/* Real-time Repo Sync Status */}
+          <div
+            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-medium transition-all ${
+              syncStatus === 'synced'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                : syncStatus === 'saving'
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                : 'bg-slate-800 border-slate-700 text-slate-400'
+            }`}
+            title="Auto-synced with data/user_progress.json in your local repository"
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                syncStatus === 'synced'
+                  ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50'
+                  : syncStatus === 'saving'
+                  ? 'bg-amber-400 animate-pulse'
+                  : 'bg-slate-500'
+              }`}
+            />
+            <span className="hidden md:inline">
+              {syncStatus === 'synced'
+                ? 'Repo Synced'
+                : syncStatus === 'saving'
+                ? 'Saving...'
+                : 'Local'}
+            </span>
+          </div>
 
           {/* Export / Backup Progress */}
           <button

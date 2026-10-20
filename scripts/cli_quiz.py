@@ -14,8 +14,10 @@ import sys
 import argparse
 import random
 
+from datetime import datetime
+
 DATA_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "questions.json")
-PROGRESS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cli_progress.json")
+PROGRESS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "user_progress.json")
 
 # ANSI Color Codes
 CYAN = "\033[96m"
@@ -40,7 +42,14 @@ def load_progress():
 
 def save_progress(data):
     try:
+        data_dir = os.path.dirname(PROGRESS_FILE)
+        os.makedirs(data_dir, exist_ok=True)
         with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        # Also write dated snapshot: aws-saa-progress-YYYY-MM-DD.json
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        dated_file = os.path.join(data_dir, f"aws-saa-progress-{date_str}.json")
+        with open(dated_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
     except Exception:
         pass
@@ -57,9 +66,12 @@ def run_quiz(start_id=None, is_random=False):
     total = len(questions)
     progress = load_progress()
 
-    if start_id is None and not is_random and progress.get("last_question_id"):
-        last_id = progress["last_question_id"]
-        saved_score = f"{progress.get('correct_count', 0)}/{progress.get('answered_count', 0)}"
+    last_id = progress.get("lastQuestionId") or progress.get("last_question_id")
+    if start_id is None and not is_random and last_id:
+        stats = progress.get("stats", {})
+        ans_count = stats.get("totalAnswered", progress.get("answered_count", 0))
+        cor_count = stats.get("totalCorrect", progress.get("correct_count", 0))
+        saved_score = f"{cor_count}/{ans_count}"
         prompt_resume = input(f"{YELLOW}Found saved session at Question #{last_id} (Score: {saved_score}). Resume? [Y/n]: {RESET}").strip().lower()
         if prompt_resume in ["", "y", "yes"]:
             start_id = last_id
@@ -151,13 +163,21 @@ def run_quiz(start_id=None, is_random=False):
             correct_count += 1
 
         # Save progress
-        history = progress.get("history", {})
-        history[str(q["id"])] = chosen
+        user_answers = progress.get("userAnswers", progress.get("history", {}))
+        submitted_map = progress.get("submitted", {})
+        user_answers[str(q["id"])] = chosen
+        submitted_map[str(q["id"])] = True
+
         progress.update({
-            "last_question_id": q["id"] + 1 if q["id"] < total else q["id"],
-            "answered_count": answered_count,
-            "correct_count": correct_count,
-            "history": history
+            "lastQuestionId": q["id"] + 1 if q["id"] < total else q["id"],
+            "lastUpdated": datetime.now().isoformat(),
+            "userAnswers": user_answers,
+            "submitted": submitted_map,
+            "bookmarks": progress.get("bookmarks", []),
+            "stats": {
+                "totalAnswered": answered_count,
+                "totalCorrect": correct_count
+            }
         })
         save_progress(progress)
 

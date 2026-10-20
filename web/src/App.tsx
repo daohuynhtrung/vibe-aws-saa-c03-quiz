@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import questionsData from './data/questions.json';
-import { Question, PracticeMode } from './types';
+import { Question, PracticeMode, SyncStatus } from './types';
 import { Navbar } from './components/Navbar';
 import { QuestionCard } from './components/QuestionCard';
 import { QuestionDrawer } from './components/QuestionDrawer';
@@ -74,6 +74,85 @@ export const App: React.FC = () => {
   const [examQuestionIds, setExamQuestionIds] = useState<number[]>([]);
   const [examTimeRemaining, setExamTimeRemaining] = useState<number>(EXAM_TOTAL_TIME);
   const [examTimeSpent, setExamTimeSpent] = useState<number>(0);
+
+  // Auto-sync status & initial load guard
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('saving');
+  const isInitialLoadedRef = useRef<boolean>(false);
+
+  // Initial Load from repo data/user_progress.json
+  useEffect(() => {
+    let isMounted = true;
+    async function loadRepoProgress() {
+      try {
+        const res = await fetch('/api/progress');
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data && typeof data === 'object') {
+            if (data.userAnswers && Object.keys(data.userAnswers).length > 0) {
+              setUserAnswers(data.userAnswers);
+            }
+            if (data.submitted && Object.keys(data.submitted).length > 0) {
+              setSubmitted(data.submitted);
+            }
+            if (Array.isArray(data.bookmarks) && data.bookmarks.length > 0) {
+              setBookmarks(data.bookmarks);
+            }
+            if (data.lastQuestionId) {
+              const idx = allQuestions.findIndex(q => q.id === data.lastQuestionId);
+              if (idx !== -1) setCurrentIndex(idx);
+            }
+            setSyncStatus('synced');
+            isInitialLoadedRef.current = true;
+            return;
+          }
+        }
+      } catch (err) {
+        // Fallback to local storage if API is offline
+      }
+      if (isMounted) {
+        setSyncStatus('offline');
+        isInitialLoadedRef.current = true;
+      }
+    }
+    loadRepoProgress();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Debounced Auto-Save to repo on user action
+  useEffect(() => {
+    if (!isInitialLoadedRef.current) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        setSyncStatus('saving');
+        const payload = {
+          lastQuestionId: allQuestions[currentIndex]?.id || 1,
+          lastUpdated: new Date().toISOString(),
+          userAnswers,
+          submitted,
+          bookmarks,
+        };
+
+        const res = await fetch('/api/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          setSyncStatus('synced');
+        } else {
+          setSyncStatus('error');
+        }
+      } catch (err) {
+        setSyncStatus('offline');
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [userAnswers, submitted, bookmarks, currentIndex]);
 
   // Sync theme
   useEffect(() => {
@@ -400,6 +479,7 @@ export const App: React.FC = () => {
             handleStartNewExam();
           }
         }}
+        syncStatus={syncStatus}
         examActive={examActive}
         timeRemaining={examTimeRemaining}
         onFinishExam={handleFinishExam}

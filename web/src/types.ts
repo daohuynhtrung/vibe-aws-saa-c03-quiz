@@ -19,6 +19,16 @@ export type PracticeMode = 'practice' | 'exam' | 'review';
 
 export type FilterStatus = 'all' | 'unanswered' | 'correct' | 'incorrect' | 'bookmarked';
 
+export type SyncStatus = 'synced' | 'saving' | 'offline' | 'error';
+
+export interface PersistentProgress {
+  lastQuestionId: number;
+  lastUpdated: string;
+  userAnswers: Record<number, string[]>;
+  submitted: Record<number, boolean>;
+  bookmarks: number[];
+}
+
 export interface UserProgress {
   answers: Record<number, string[]>;
   submitted: Record<number, boolean>;
