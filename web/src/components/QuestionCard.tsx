@@ -141,7 +141,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           return (
             <div
               key={opt.key}
-              onClick={() => onSelectOption(opt.key)}
+              onClick={() => {
+                console.log(`🖱️ [Option Clicked] Key: "${opt.key}" | Question #${question.id}`, {
+                  optionKey: opt.key,
+                  optionText: opt.text.substring(0, 50) + '...',
+                  currentSelected: selectedOptions,
+                  isSubmitted,
+                  isCorrectAnswer
+                });
+                onSelectOption(opt.key);
+              }}
               className={`group flex items-start gap-3.5 p-4 rounded-xl border transition-all cursor-pointer select-none ${itemStyle}`}
             >
               {/* Option Key Letter / Checkbox */}
@@ -203,7 +212,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
           {!isSubmitted && selectedOptions.length > 0 && (
             <button
-              onClick={onClearSelection}
+              onClick={() => {
+                console.log(`🖱️ [Clear Clicked] Question #${question.id}`);
+                onClearSelection();
+              }}
               className="text-xs text-slate-400 hover:text-slate-200 px-2 py-1 rounded transition-colors"
             >
               Clear
@@ -212,7 +224,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
           {isSubmitted && (
             <button
-              onClick={onClearSelection}
+              onClick={() => {
+                console.log(`🖱️ [Retry Clicked] Question #${question.id}`);
+                onClearSelection();
+              }}
               className="flex items-center gap-1 text-xs text-slate-400 hover:text-amber-400 px-2 py-1 rounded transition-colors"
               title="Reset choice and re-attempt"
             >
@@ -226,7 +241,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         <div>
           {!isSubmitted ? (
             <button
-              onClick={onSubmitAnswer}
+              onClick={() => {
+                console.log(`🖱️ [Check Answer Clicked] Question #${question.id}`, { selectedOptions, expected });
+                onSubmitAnswer();
+              }}
               disabled={!canSubmit}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:hover:bg-amber-500 disabled:cursor-not-allowed text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all active:scale-95"
             >

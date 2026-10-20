@@ -82,12 +82,14 @@ export const App: React.FC = () => {
   // Instant answer check mode (auto-reveal answer on option selection in practice mode)
   const [instantReveal, setInstantReveal] = useState<boolean>(true);
   const [keyToast, setKeyToast] = useState<string | null>(null);
+  const [debugLog, setDebugLog] = useState<string>('Ready. Click options or press 1-5.');
 
   const showKeyToast = useCallback((msg: string) => {
     setKeyToast(msg);
+    setDebugLog(msg);
     setTimeout(() => {
       setKeyToast(prev => (prev === msg ? null : prev));
-    }, 1200);
+    }, 1500);
   }, []);
 
   // Initial Load from repo data/user_progress.json
@@ -188,6 +190,22 @@ export const App: React.FC = () => {
     localStorage.setItem(STORAGE_BOOKMARKS, JSON.stringify(bookmarks));
   }, [bookmarks]);
 
+  // Global Click Debugger
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const el = e.target as HTMLElement;
+      console.log(`🖱️ [Global Click]`, {
+        tagName: el?.tagName,
+        id: el?.id,
+        className: el?.className,
+        text: el?.innerText ? el.innerText.substring(0, 35) : '',
+        activeElement: document.activeElement?.tagName
+      });
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
+
   // Exam timer ticker
   useEffect(() => {
     let interval: any = null;
@@ -265,9 +283,21 @@ export const App: React.FC = () => {
 
   // Selection handler
   const handleSelectOption = useCallback((key: string) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion) {
+      console.warn("⚠️ [handleSelectOption] No currentQuestion available!");
+      return;
+    }
     const qid = currentQuestion.id;
     const isSub = !!submitted[qid];
+
+    console.log(`🎯 [handleSelectOption] Selecting "${key}" on Question #${qid}`, {
+      key,
+      qid,
+      isSub,
+      mode,
+      instantReveal,
+      currentlySelected: userAnswers[qid] || []
+    });
 
     // If already submitted in practice mode, unfreeze so user can select/retry
     if (isSub && mode === 'practice') {
@@ -308,8 +338,11 @@ export const App: React.FC = () => {
       (isSingle || updated.length === currentQuestion.expected_count);
 
     if (isReadyToAutoSubmit) {
+      console.log(`⚡ [Auto-Checking Answer] Question #${qid} submitted with answer`, updated);
       setSubmitted(prev => ({ ...prev, [qid]: true }));
     }
+
+    setDebugLog(`Selected Option "${key}" for Q#${qid}${isReadyToAutoSubmit ? ' (Auto-Checked)' : ''}`);
   }, [currentQuestion, submitted, mode, instantReveal, userAnswers]);
 
   // Submit answer handler
@@ -432,10 +465,23 @@ export const App: React.FC = () => {
   // Global Keyboard listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const targetEl = e.target as HTMLElement;
+      console.log(`🎹 [Keydown Event] Key: "${e.key}" | Code: "${e.code}" | Target: <${targetEl?.tagName}>`, {
+        key: e.key,
+        code: e.code,
+        keyCode: e.keyCode,
+        targetTagName: targetEl?.tagName,
+        targetId: targetEl?.id,
+        activeElementTagName: document.activeElement?.tagName,
+        currentQuestionId: currentQuestion?.id
+      });
+
       // Don't trigger if user is actively typing in an input/textarea/select
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName)) {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(targetEl?.tagName)) {
+        console.warn(`⚠️ [Keydown ignored] Input element is currently focused:`, targetEl);
+        setDebugLog(`Key ignored: <${targetEl?.tagName}> is focused! Click outside to unfocus.`);
         if (e.key === 'Escape') {
-          (e.target as HTMLElement).blur();
+          targetEl.blur();
           setIsDrawerOpen(false);
           setIsHelpOpen(false);
           setIsSummaryOpen(false);
@@ -681,11 +727,24 @@ export const App: React.FC = () => {
 
       {/* Floating Keypress HUD Indicator */}
       {keyToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2 text-xs border border-amber-400 animate-in fade-in slide-in-from-bottom-2 duration-150">
+        <div className="fixed bottom-10 right-6 z-50 bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2 text-xs border border-amber-400 animate-in fade-in slide-in-from-bottom-2 duration-150">
           <Sparkles className="w-4 h-4 fill-slate-950" />
           <span>{keyToast}</span>
         </div>
       )}
+
+      {/* Live On-Screen Debug Status Bar */}
+      <footer className="border-t border-slate-800 bg-slate-950 px-4 py-2 text-[11px] font-mono text-slate-400 flex items-center justify-between gap-2 sticky bottom-0 z-20">
+        <div className="flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
+          <span className="text-amber-400 font-bold">🐞 Live Debug:</span>
+          <span className="text-slate-200">{debugLog}</span>
+        </div>
+        <div className="hidden sm:flex items-center gap-3 text-slate-500 flex-shrink-0">
+          <span>Current: Q#{currentQuestion?.id || 1}</span>
+          <span>Mode: {mode}</span>
+          <span>Submitted: {currentQuestion && submitted[currentQuestion.id] ? 'true' : 'false'}</span>
+        </div>
+      </footer>
     </div>
   );
 };
