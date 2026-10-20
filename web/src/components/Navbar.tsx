@@ -12,7 +12,8 @@ import {
   Moon,
   CheckCircle2,
   Download,
-  Upload
+  Upload,
+  Zap
 } from 'lucide-react';
 import { PracticeMode, SyncStatus } from '../types';
 
@@ -20,6 +21,8 @@ interface NavbarProps {
   mode: PracticeMode;
   setMode: (mode: PracticeMode) => void;
   syncStatus: SyncStatus;
+  instantReveal: boolean;
+  setInstantReveal: (val: boolean) => void;
   examActive: boolean;
   timeRemaining: number;
   onFinishExam: () => void;
@@ -39,6 +42,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   mode,
   setMode,
   syncStatus,
+  instantReveal,
+  setInstantReveal,
   examActive,
   timeRemaining,
   onFinishExam,
@@ -188,6 +193,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                 : 'Local'}
             </span>
           </div>
+
+          {/* Instant Check Toggle for Practice Mode */}
+          {mode === 'practice' && (
+            <button
+              onClick={() => setInstantReveal(!instantReveal)}
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                instantReveal
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
+                  : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-white'
+              }`}
+              title="Instant Check: automatically check answer as soon as you select an option"
+            >
+              <Zap className={`w-3.5 h-3.5 ${instantReveal ? 'fill-amber-400 text-amber-400' : ''}`} />
+              <span>Auto Check: {instantReveal ? 'ON' : 'OFF'}</span>
+            </button>
+          )}
 
           {/* Export / Backup Progress */}
           <button

@@ -79,6 +79,17 @@ export const App: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('saving');
   const isInitialLoadedRef = useRef<boolean>(false);
 
+  // Instant answer check mode (auto-reveal answer on option selection in practice mode)
+  const [instantReveal, setInstantReveal] = useState<boolean>(true);
+  const [keyToast, setKeyToast] = useState<string | null>(null);
+
+  const showKeyToast = useCallback((msg: string) => {
+    setKeyToast(msg);
+    setTimeout(() => {
+      setKeyToast(prev => (prev === msg ? null : prev));
+    }, 1200);
+  }, []);
+
   // Initial Load from repo data/user_progress.json
   useEffect(() => {
     let isMounted = true;
@@ -288,7 +299,18 @@ export const App: React.FC = () => {
     }
 
     setUserAnswers(prev => ({ ...prev, [qid]: updated }));
-  }, [currentQuestion, submitted, mode, userAnswers]);
+
+    // Instant Check: automatically check answer and reveal solution as soon as selected
+    const isSingle = !currentQuestion.is_multiselect;
+    const isReadyToAutoSubmit =
+      mode === 'practice' &&
+      instantReveal &&
+      (isSingle || updated.length === currentQuestion.expected_count);
+
+    if (isReadyToAutoSubmit) {
+      setSubmitted(prev => ({ ...prev, [qid]: true }));
+    }
+  }, [currentQuestion, submitted, mode, instantReveal, userAnswers]);
 
   // Submit answer handler
   const handleSubmitAnswer = useCallback(() => {
@@ -463,6 +485,7 @@ export const App: React.FC = () => {
 
       if (optionKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
+        showKeyToast(`Selected Option ${optionKey} (${optionKey.charCodeAt(0) - 64})`);
         handleSelectOption(optionKey);
       } else if (e.key === 'Enter') {
         e.preventDefault();
@@ -519,6 +542,8 @@ export const App: React.FC = () => {
           }
         }}
         syncStatus={syncStatus}
+        instantReveal={instantReveal}
+        setInstantReveal={setInstantReveal}
         examActive={examActive}
         timeRemaining={examTimeRemaining}
         onFinishExam={handleFinishExam}
@@ -653,6 +678,14 @@ export const App: React.FC = () => {
         }}
         timeSpentSeconds={examTimeSpent}
       />
+
+      {/* Floating Keypress HUD Indicator */}
+      {keyToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2 text-xs border border-amber-400 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <Sparkles className="w-4 h-4 fill-slate-950" />
+          <span>{keyToast}</span>
+        </div>
+      )}
     </div>
   );
 };
