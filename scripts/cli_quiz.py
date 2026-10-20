@@ -15,6 +15,7 @@ import argparse
 import random
 
 DATA_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "questions.json")
+PROGRESS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "cli_progress.json")
 
 # ANSI Color Codes
 CYAN = "\033[96m"
@@ -28,6 +29,22 @@ RESET = "\033[0m"
 def clear_screen():
     print("\033[H\033[J", end="")
 
+def load_progress():
+    if os.path.exists(PROGRESS_FILE):
+        try:
+            with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_progress(data):
+    try:
+        with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
+
 def load_questions():
     if not os.path.exists(DATA_FILE):
         print(f"{RED}Error: Dataset not found at {DATA_FILE}. Run `python3 scripts/parse_dataset.py` first.{RESET}")
@@ -35,9 +52,21 @@ def load_questions():
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def run_quiz(start_id=1, is_random=False):
+def run_quiz(start_id=None, is_random=False):
     questions = load_questions()
     total = len(questions)
+    progress = load_progress()
+
+    if start_id is None and not is_random and progress.get("last_question_id"):
+        last_id = progress["last_question_id"]
+        saved_score = f"{progress.get('correct_count', 0)}/{progress.get('answered_count', 0)}"
+        prompt_resume = input(f"{YELLOW}Found saved session at Question #{last_id} (Score: {saved_score}). Resume? [Y/n]: {RESET}").strip().lower()
+        if prompt_resume in ["", "y", "yes"]:
+            start_id = last_id
+        else:
+            start_id = 1
+    elif start_id is None:
+        start_id = 1
     
     if is_random:
         random.shuffle(questions)
@@ -48,8 +77,8 @@ def run_quiz(start_id=1, is_random=False):
         order = list(range(start_idx, total))
 
     curr_idx = 0
-    correct_count = 0
-    answered_count = 0
+    correct_count = progress.get("correct_count", 0) if (start_id > 1 and not is_random) else 0
+    answered_count = progress.get("answered_count", 0) if (start_id > 1 and not is_random) else 0
 
     while curr_idx < len(order):
         q = questions[order[curr_idx]]
@@ -121,6 +150,17 @@ def run_quiz(start_id=1, is_random=False):
         if is_right:
             correct_count += 1
 
+        # Save progress
+        history = progress.get("history", {})
+        history[str(q["id"])] = chosen
+        progress.update({
+            "last_question_id": q["id"] + 1 if q["id"] < total else q["id"],
+            "answered_count": answered_count,
+            "correct_count": correct_count,
+            "history": history
+        })
+        save_progress(progress)
+
         print("\n" + "-" * 70)
         if is_right:
             print(f"{GREEN}{BOLD}✓ CORRECT!{RESET} Answer is: {', '.join(correct_answers)}")
@@ -146,7 +186,7 @@ def run_quiz(start_id=1, is_random=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AWS SAA-C03 Interactive Terminal Quiz")
-    parser.add_argument("--jump", type=int, default=1, help="Start at question ID (1-684)")
+    parser.add_argument("--jump", type=int, default=None, help="Start at question ID (1-684)")
     parser.add_argument("--random", action="store_true", help="Randomize question sequence")
     args = parser.parse_args()
 

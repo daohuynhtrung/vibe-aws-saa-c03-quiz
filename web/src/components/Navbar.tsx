@@ -10,7 +10,9 @@ import {
   Menu,
   Sun,
   Moon,
-  CheckCircle2
+  CheckCircle2,
+  Download,
+  Upload
 } from 'lucide-react';
 import { PracticeMode } from '../types';
 
@@ -21,6 +23,8 @@ interface NavbarProps {
   timeRemaining: number;
   onFinishExam: () => void;
   onResetProgress: () => void;
+  onExportProgress: () => void;
+  onImportProgress: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onToggleDrawer: () => void;
   onOpenHelp: () => void;
   isDark: boolean;
@@ -37,6 +41,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   timeRemaining,
   onFinishExam,
   onResetProgress,
+  onExportProgress,
+  onImportProgress,
   onToggleDrawer,
   onOpenHelp,
   isDark,
@@ -151,6 +157,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div>Bank: {totalQuestions} Qs</div>
             </div>
           )}
+
+          {/* Export / Backup Progress */}
+          <button
+            onClick={onExportProgress}
+            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            title="Export / Download Progress JSON"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+
+          {/* Import / Restore Progress */}
+          <label
+            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            title="Import / Restore Progress JSON"
+          >
+            <Upload className="w-4 h-4" />
+            <input
+              type="file"
+              accept=".json"
+              onChange={onImportProgress}
+              className="hidden"
+            />
+          </label>
 
           {/* Quick Help & Settings */}
           <button

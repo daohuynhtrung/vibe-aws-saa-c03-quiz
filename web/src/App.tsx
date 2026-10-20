@@ -281,6 +281,49 @@ export const App: React.FC = () => {
     }
   }, []);
 
+  // Export progress to a JSON file download
+  const handleExportProgress = useCallback(() => {
+    const data = {
+      userAnswers,
+      submitted,
+      bookmarks,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aws-saa-c03-progress-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [userAnswers, submitted, bookmarks]);
+
+  // Import progress from a JSON file
+  const handleImportProgress = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (parsed.userAnswers && typeof parsed.userAnswers === 'object') {
+          setUserAnswers(parsed.userAnswers);
+        }
+        if (parsed.submitted && typeof parsed.submitted === 'object') {
+          setSubmitted(parsed.submitted);
+        }
+        if (Array.isArray(parsed.bookmarks)) {
+          setBookmarks(parsed.bookmarks);
+        }
+        alert('Progress successfully imported! Your study session is restored.');
+      } catch (err) {
+        alert('Invalid progress file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }, []);
+
   // Global Keyboard listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -361,6 +404,8 @@ export const App: React.FC = () => {
         timeRemaining={examTimeRemaining}
         onFinishExam={handleFinishExam}
         onResetProgress={handleResetProgress}
+        onExportProgress={handleExportProgress}
+        onImportProgress={handleImportProgress}
         onToggleDrawer={() => setIsDrawerOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
         isDark={isDark}
