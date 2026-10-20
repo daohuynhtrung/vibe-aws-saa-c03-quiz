@@ -142,6 +142,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             <div
               key={opt.key}
               onClick={() => {
+                if (isSubmitted) {
+                  console.log(`🔒 [Click Blocked] Question #${question.id} is already answered.`);
+                  return;
+                }
                 console.log(`🖱️ [Option Clicked] Key: "${opt.key}" | Question #${question.id}`, {
                   optionKey: opt.key,
                   optionText: opt.text.substring(0, 50) + '...',
@@ -151,7 +155,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 });
                 onSelectOption(opt.key);
               }}
-              className={`group flex items-start gap-3.5 p-4 rounded-xl border transition-all cursor-pointer select-none ${itemStyle}`}
+              className={`group flex items-start gap-3.5 p-4 rounded-xl border transition-all select-none ${
+                isSubmitted ? 'cursor-default pointer-events-none' : 'cursor-pointer'
+              } ${itemStyle}`}
             >
               {/* Option Key Letter / Checkbox */}
               <div className="flex-shrink-0 pt-0.5">

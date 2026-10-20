@@ -299,13 +299,11 @@ export const App: React.FC = () => {
       currentlySelected: userAnswers[qid] || []
     });
 
-    // If already submitted in practice mode, unfreeze so user can select/retry
-    if (isSub && mode === 'practice') {
-      setSubmitted(prev => {
-        const next = { ...prev };
-        delete next[qid];
-        return next;
-      });
+    // Once an option is submitted, lock question so other options cannot be chosen
+    if (isSub) {
+      console.log(`🔒 [Option Locked] Question #${qid} already has an answer submitted.`);
+      showKeyToast(`Answer submitted! Click [Retry] or press [R] to change.`);
+      return;
     }
 
     const currentSelected = userAnswers[qid] || [];
@@ -545,6 +543,10 @@ export const App: React.FC = () => {
       } else if (e.code === 'KeyF' || e.code === 'KeyB') {
         e.preventDefault();
         handleToggleBookmark();
+      } else if (e.code === 'KeyR' || (e.key && e.key.toUpperCase() === 'R')) {
+        e.preventDefault();
+        handleClearSelection();
+        showKeyToast('Question reset. You can select again.');
       } else if (e.code === 'KeyQ') {
         e.preventDefault();
         setIsDrawerOpen(prev => !prev);
