@@ -117,7 +117,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         {question.options.map((opt) => {
           const isSelected = selectedOptions.includes(opt.key);
           const isCorrectAnswer = question.answer.includes(opt.key);
-          const shortcutNum = opt.key.charCodeAt(0) - 64; // A -> 1, B -> 2, etc.
 
           // Determine styles
           let itemStyle = 'border-slate-800 bg-slate-900/60 hover:bg-slate-800/60 hover:border-slate-700 text-slate-200';
@@ -147,9 +146,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             >
               {/* Option Key Letter / Checkbox */}
               <div className="flex-shrink-0 pt-0.5">
-                <span className={`w-8 h-8 rounded-lg border flex flex-col items-center justify-center font-mono transition-all ${badgeStyle}`}>
-                  <span className="text-xs font-bold leading-none">{opt.key}</span>
-                  <span className="text-[9px] opacity-70 font-semibold leading-none mt-0.5">{shortcutNum}</span>
+                <span className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs font-mono font-semibold transition-all ${badgeStyle}`}>
+                  {opt.key}
                 </span>
               </div>
 
