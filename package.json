@@ -1,0 +1,15 @@
+{
+  "name": "aws-saa-c03-exam-practice",
+  "version": "1.0.0",
+  "description": "Interactive AWS Certified Solutions Architect Associate (SAA-C03) Exam Practice App",
+  "scripts": {
+    "dev": "npm --prefix web run dev",
+    "build": "npm --prefix web run build",
+    "preview": "npm --prefix web run preview",
+    "parse": "python3 scripts/parse_dataset.py",
+    "cli": "python3 scripts/cli_quiz.py"
+  },
+  "keywords": ["aws", "saa-c03", "solutions-architect", "exam-practice", "quiz"],
+  "author": "",
+  "license": "MIT"
+}
